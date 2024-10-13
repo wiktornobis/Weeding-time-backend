@@ -25,7 +25,6 @@ public class ApplicationUser {
      * Encrypted user password
      */
     private String encryptedPassword;
-    private String salt;
     private String role;
     private String email;
     private String phoneNumber;
