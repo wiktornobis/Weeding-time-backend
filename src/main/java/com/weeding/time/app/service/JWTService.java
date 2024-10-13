@@ -40,7 +40,7 @@ public class JWTService {
                 .add(claims)
                 .subject(firstName)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 30))
+                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 60 * 12)) // 12h ważność tokenu
                 .and()
                 .signWith(getKey())
                 .compact();
