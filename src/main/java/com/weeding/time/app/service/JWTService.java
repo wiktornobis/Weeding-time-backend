@@ -18,10 +18,7 @@ import java.util.function.Function;
 
 @Service
 public class JWTService {
-
-
     private String secretkey = "";
-
     public JWTService() {
 
         try {
@@ -46,7 +43,6 @@ public class JWTService {
                 .compact();
 
     }
-
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretkey);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -61,7 +57,6 @@ public class JWTService {
         final Claims claims = extractAllClaims(token);
         return claimResolver.apply(claims);
     }
-
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getKey())
@@ -69,7 +64,6 @@ public class JWTService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
     public boolean validateToken(String token, UserDetails userDetails) {
         final String firstName = extractFirstName(token);
         return (firstName.equals(userDetails.getUsername()) && !isTokenExpired(token));

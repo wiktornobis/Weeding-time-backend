@@ -11,17 +11,5 @@ services:
     ports:
       - "5433:5432"
 
-  app:
-    build: .
-    container_name: wedding-time
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/wedding_app
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-    depends_on:
-      - db
-
 volumes:
   weeding-pgsql:  #  Nazwa wolumenu
