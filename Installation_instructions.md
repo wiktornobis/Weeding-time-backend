@@ -15,16 +15,14 @@ git clone git@github.com:wiktornobis/Weeding-time-backend.git
 ```
 
 
-
-Baza danych i serwer tomcat są zdockeryzowane.
+Baza danych psql jest zdockeryzowana.
 
 
 1. W głównym katalogu projektu skopiować plik `.env.example` na `.env`. Zawiera on zmienne środowiskowe.
-2. W katalogu /macos/docker/ - zbudować obraz kontenera docker: `docker-compose up --build`
+2. W katalogu /macos/docker/ - zbudować obraz kontenera docker - zbuduje się baza postgresql: `docker-compose up --build`
     * Po utworzeniu kontenerów i bazy danych można zalogować się lokalnie z terminala `docker exec -it {nazwa_bazy_danych} psql -U {nazwa_uzytkownika} -d {nazwa_bazy_danych}`
-
-
-5. W przeglądarce aplikacja powinna być widoczna pod adresem `http://localhost:8088`.
+3. Przechodząc z głównej scieżki do `cd ./etc/initialDtat/sql` wykonać skrypt initData.sql (można dopasować swoje dane do admina)
+4. Uruchamiając tomcata np. za pomocą Ideo w przeglądarce aplikacja powinna być widoczna pod adresem `http://localhost:8088`.
 
 
 
