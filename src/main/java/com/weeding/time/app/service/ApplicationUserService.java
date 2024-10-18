@@ -1,13 +1,18 @@
 package com.weeding.time.app.service;
 
 import com.weeding.time.app.model.ApplicationUser;
+import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.repository.ApplicationUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class ApplicationUserService {
@@ -16,7 +21,7 @@ public class ApplicationUserService {
     private ApplicationUserRepository applicationUserRepository;
 
     @Autowired
-    AuthenticationManager authenticationManager;
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private JWTService jwtService;
@@ -28,15 +33,24 @@ public class ApplicationUserService {
         return applicationUserRepository.save(applicationUser);
     }
 
-
-    public String verify(ApplicationUser applicationUser) {
-        Authentication authentication =
-                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(applicationUser.getFirstName(), applicationUser.getEncryptedPassword()));
+    public Map<String, String> verify(ApplicationUser applicationUser) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(applicationUser.getEmail(), applicationUser.getEncryptedPassword())
+        );
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(applicationUser.getFirstName());
+            return jwtService.generateTokens(applicationUser.getEmail());
+        } else {
+            throw new RuntimeException("Uwierzytelnienie nie powiodło się.");
         }
-        return "fail";
+    }
+
+    public String refreshAccessToken(String refreshToken, String email) {
+        ApplicationUser applicationUser = applicationUserRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
+
+        UserDetails userDetails = new UserPrincipal(applicationUser);
+        return jwtService.refreshAccessToken(refreshToken, userDetails);
     }
 
 }

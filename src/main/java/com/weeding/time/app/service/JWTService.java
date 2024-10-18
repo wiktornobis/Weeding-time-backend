@@ -19,8 +19,10 @@ import java.util.function.Function;
 @Service
 public class JWTService {
     private String secretkey = "";
-    public JWTService() {
+    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 30; // 30 minutes
+    private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7; // 7 days
 
+    public JWTService() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
             SecretKey sk = keyGen.generateKey();
@@ -29,27 +31,30 @@ public class JWTService {
             throw new RuntimeException(e);
         }
     }
-
-    public String generateToken(String firstName) {
+    public Map<String, String> generateTokens(String email) {
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", generateToken(email, ACCESS_TOKEN_VALIDITY));
+        tokens.put("refreshToken", generateToken(email, REFRESH_TOKEN_VALIDITY));
+        return tokens;
+    }
+    public String generateToken(String email, long validity) {
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
                 .claims()
                 .add(claims)
-                .subject(firstName)
+                .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 60 * 12)) // 12h ważność tokenu
+                .expiration(new Date(System.currentTimeMillis() + validity))
                 .and()
                 .signWith(getKey())
                 .compact();
-
     }
+
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretkey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
-    public String extractFirstName(String token) {
-        // extract the firstName from jwt token
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -57,6 +62,7 @@ public class JWTService {
         final Claims claims = extractAllClaims(token);
         return claimResolver.apply(claims);
     }
+
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getKey())
@@ -65,8 +71,8 @@ public class JWTService {
                 .getPayload();
     }
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String firstName = extractFirstName(token);
-        return (firstName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        final String email = extractEmail(token);
+        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {
@@ -75,6 +81,17 @@ public class JWTService {
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    // Refresh Access Token
+    public String refreshAccessToken(String refreshToken, UserDetails userDetails) {
+        // Walidacja refresh tokena
+        if (validateToken(refreshToken, userDetails)) {
+            // Generujemy nowy access token
+            return generateToken(userDetails.getUsername(), ACCESS_TOKEN_VALIDITY);
+        } else {
+            throw new RuntimeException("Nieprawidłowy refresh token");
+        }
     }
 
 }
