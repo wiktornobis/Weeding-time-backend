@@ -39,11 +39,15 @@ public class ApplicationUserService {
         );
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateTokens(applicationUser.getEmail());
+            ApplicationUser user = applicationUserRepository.findByEmail(applicationUser.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
+
+            return jwtService.generateTokens(user.getEmail(), user.getRole());
         } else {
             throw new RuntimeException("Uwierzytelnienie nie powiodło się.");
         }
     }
+
 
     public String refreshAccessToken(String refreshToken, String email) {
         ApplicationUser applicationUser = applicationUserRepository.findByEmail(email)
@@ -52,5 +56,4 @@ public class ApplicationUserService {
         UserDetails userDetails = new UserPrincipal(applicationUser);
         return jwtService.refreshAccessToken(refreshToken, userDetails);
     }
-
 }

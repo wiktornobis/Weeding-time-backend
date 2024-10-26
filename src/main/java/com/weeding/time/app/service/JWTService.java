@@ -31,14 +31,16 @@ public class JWTService {
             throw new RuntimeException(e);
         }
     }
-    public Map<String, String> generateTokens(String email) {
+    public Map<String, String> generateTokens(String email, String role) {
         Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", generateToken(email, ACCESS_TOKEN_VALIDITY));
-        tokens.put("refreshToken", generateToken(email, REFRESH_TOKEN_VALIDITY));
+        tokens.put("accessToken", generateToken(email, role, ACCESS_TOKEN_VALIDITY));
+        tokens.put("refreshToken", generateToken(email, role, REFRESH_TOKEN_VALIDITY));
+        tokens.put("role", role);
         return tokens;
     }
-    public String generateToken(String email, long validity) {
+    public String generateToken(String email, String role, long validity) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
         return Jwts.builder()
                 .claims()
                 .add(claims)
@@ -56,6 +58,9 @@ public class JWTService {
     }
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
@@ -88,7 +93,7 @@ public class JWTService {
         // Walidacja refresh tokena
         if (validateToken(refreshToken, userDetails)) {
             // Generujemy nowy access token
-            return generateToken(userDetails.getUsername(), ACCESS_TOKEN_VALIDITY);
+            return generateToken(userDetails.getUsername(), extractRole(refreshToken), ACCESS_TOKEN_VALIDITY);
         } else {
             throw new RuntimeException("Nieprawidłowy refresh token");
         }
