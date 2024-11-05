@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ApplicationUserService {
@@ -48,12 +49,26 @@ public class ApplicationUserService {
         }
     }
 
-
-    public String refreshAccessToken(String refreshToken, String email) {
+    public Map<String, String> refreshAccessToken(String refreshToken, String email) {
+        // Znalezienie użytkownika po adresie email
         ApplicationUser applicationUser = applicationUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
 
+        // Walidacja refresh tokena i generowanie nowego access tokena
         UserDetails userDetails = new UserPrincipal(applicationUser);
-        return jwtService.refreshAccessToken(refreshToken, userDetails);
+        String newAccessToken = jwtService.refreshAccessToken(refreshToken, userDetails);
+
+        // Zwracamy nowy access token
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", newAccessToken);
+        return tokens;
+    }
+    public boolean isAccessTokenValid(String accessToken) {
+        return jwtService.isAccessTokenValid(accessToken);
+    }
+
+    // Nowa metoda do sprawdzenia poprawności refresh tokena
+    public boolean isRefreshTokenValid(String refreshToken) {
+        return jwtService.isRefreshTokenValid(refreshToken);
     }
 }

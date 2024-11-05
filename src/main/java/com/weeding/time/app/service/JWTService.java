@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 @Service
 public class JWTService {
-    private String secretkey = "";
+    public String secretkey = "";
     private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 30; // 30 minutes
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7; // 7 days
 
@@ -97,6 +97,15 @@ public class JWTService {
         } else {
             throw new RuntimeException("Nieprawidłowy refresh token");
         }
+    }
+
+    // Nowe metody: Sprawdzanie ważności access tokena i refresh tokena
+    public boolean isAccessTokenValid(String accessToken) {
+        return !isTokenExpired(accessToken);
+    }
+
+    public boolean isRefreshTokenValid(String refreshToken) {
+        return !isTokenExpired(refreshToken);
     }
 
 }
