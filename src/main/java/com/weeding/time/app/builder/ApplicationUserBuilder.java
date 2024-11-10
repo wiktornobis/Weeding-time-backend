@@ -4,12 +4,10 @@ import com.weeding.time.app.dto.ApplicationUserDto;
 import com.weeding.time.app.model.ApplicationUser;
 import org.springframework.stereotype.Service;
 
-import java.util.function.Function;
-
 @Service
-public class ApplicationUserBuilder  {
+public class ApplicationUserBuilder {
 
-
+    // Mapowanie z encji ApplicationUser do DTO ApplicationUserDto
     public ApplicationUserDto buildDto(ApplicationUser applicationUser) {
         if (applicationUser == null) {
             throw new IllegalArgumentException("ApplicationUser cannot be null");
@@ -25,14 +23,18 @@ public class ApplicationUserBuilder  {
                 .email(applicationUser.getEmail())
                 .phoneNumber(applicationUser.getPhoneNumber())
                 .weedingDate(applicationUser.getWeedingDate())
+                // Zamiast getWeddingId(), dostajemy ID ze związanego obiektu Wedding
+                .weeding(applicationUser.getWedding())
                 .build();
     }
 
+    // Mapowanie z DTO ApplicationUserDto do encji ApplicationUser
     public ApplicationUser buildDomain(ApplicationUserDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("ApplicationUserDto cannot be null");
         }
 
+        // Mapujemy DTO na encję i przypisujemy obiekt Wedding, nie tylko ID
         return ApplicationUser.builder()
                 .id(dto.getId())
                 .firstName(dto.getFirstName())
@@ -41,6 +43,8 @@ public class ApplicationUserBuilder  {
                 .email(dto.getEmail())
                 .phoneNumber(dto.getPhoneNumber())
                 .weedingDate(dto.getWeedingDate())
+                // Zakładając, że przekazujemy pełny obiekt Wedding, nie tylko ID
+                .wedding(dto.getWeeding())
                 .build();
     }
 }

@@ -1,9 +1,6 @@
 package com.weeding.time.app.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,4 +24,8 @@ public class ApplicationUser {
     private String email;
     private String phoneNumber;
     private Date weedingDate;
+    // Relacja wiele-do-jednego z Wedding
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "wedding_id", referencedColumnName = "wedding_id")
+    private Wedding wedding;
 }

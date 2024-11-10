@@ -1,5 +1,6 @@
 package com.weeding.time.app.dto;
 
+import com.weeding.time.app.model.Wedding;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,4 +17,5 @@ public class ApplicationUserDto {
     private String email;
     private String phoneNumber;
     private Date weedingDate;
+    private Wedding weeding;
 }

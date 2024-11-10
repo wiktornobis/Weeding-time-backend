@@ -1,5 +1,6 @@
 package com.weeding.time.app.controller;
 
+import com.weeding.time.app.dto.ApplicationUserDto;
 import com.weeding.time.app.model.ApplicationUser;
 import com.weeding.time.app.service.ApplicationUserService;
 import jakarta.servlet.http.Cookie;
@@ -18,12 +19,6 @@ public class ApplicationUserController {
 
     @Autowired
     private ApplicationUserService applicationUserService;
-
-    @PostMapping("/register")
-    public ResponseEntity<ApplicationUser> register(@RequestBody ApplicationUser applicationUser) {
-        ApplicationUser registeredUser = applicationUserService.register(applicationUser);
-        return ResponseEntity.ok(registeredUser);
-    }
 
     @PostMapping("/login")
     @CrossOrigin(origins = "http://localhost:8099", allowCredentials = "true")
