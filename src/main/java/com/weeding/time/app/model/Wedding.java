@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -39,8 +40,8 @@ public class Wedding {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // Relacja wiele do jednego - jedno wesele ma wielu użytkowników
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_user", referencedColumnName = "id")
-    private ApplicationUser applicationUser;
+    // Relacja wiele-do-jednego - jedno wesele ma wielu użytkowników
+    @OneToMany(mappedBy = "wedding", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private List<ApplicationUser> users;
+
 }

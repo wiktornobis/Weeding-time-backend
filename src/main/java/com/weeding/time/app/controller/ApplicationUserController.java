@@ -1,11 +1,10 @@
 package com.weeding.time.app.controller;
 
 import com.weeding.time.app.dto.ApplicationUserDto;
-import com.weeding.time.app.model.ApplicationUser;
 import com.weeding.time.app.service.ApplicationUserService;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +21,10 @@ public class ApplicationUserController {
 
     @PostMapping("/login")
     @CrossOrigin(origins = "http://localhost:8099", allowCredentials = "true")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody ApplicationUser applicationUser, HttpServletResponse response) {
-        Map<String, String> tokens = applicationUserService.verify(applicationUser);
+    public ResponseEntity<Map<String, Object>> login(@RequestBody ApplicationUserDto applicationUserDto, HttpServletResponse response) {
+        // Weryfikacja i generowanie tokenów, przekazanie DTO do serwisu
+        Map<String, String> tokens = applicationUserService.verify(applicationUserDto); // Przekazujemy DTO
+
         Map<String, Object> responseMap = new HashMap<>();
 
         if (tokens != null) {
@@ -47,10 +48,10 @@ public class ApplicationUserController {
             responseMap.put("userRole", tokens.get("userRole"));
             return ResponseEntity.ok(responseMap);
         } else {
-            // W przypadku błędu zwróć treść odpowiedzi z informacją o błędnym logowaniu
-            responseMap.put("message", "Błędny login lub hasło"); // Dodatkowy komunikat
+            // Jeśli weryfikacja się nie powiodła
+            responseMap.put("message", "Błędny login lub hasło");
             responseMap.put("userIsAuth", false);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseMap);  // Użycie 401 Unauthorized i treści błędu
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseMap);  // Użycie 401 Unauthorized
         }
     }
 
@@ -63,7 +64,7 @@ public class ApplicationUserController {
         String refreshToken = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals("refreshToken")) {
+                if ("refreshToken".equals(cookie.getName())) {
                     refreshToken = cookie.getValue();
                     break;
                 }
@@ -90,9 +91,7 @@ public class ApplicationUserController {
 
         response.addCookie(accessCookie);
 
-        Map<String, String> responseMap = new HashMap<>();
-        responseMap.put("accessToken", newTokens.get("accessToken"));
-        return ResponseEntity.ok(responseMap);
+        return ResponseEntity.ok(Map.of("accessToken", newTokens.get("accessToken")));
     }
 
     @PostMapping("/logout")
@@ -124,9 +123,9 @@ public class ApplicationUserController {
 
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals("accessToken")) {
+                if ("accessToken".equals(cookie.getName())) {
                     accessToken = cookie.getValue();
-                } else if (cookie.getName().equals("refreshToken")) {
+                } else if ("refreshToken".equals(cookie.getName())) {
                     refreshToken = cookie.getValue();
                 }
             }
@@ -150,7 +149,7 @@ public class ApplicationUserController {
 
         responseAuth.put("userAuth", isAuthenticated);
         responseAuth.put("userRole", "ADMIN");
-//      //TODO: dorobić przekazywanie user role z bazy danych
+        // TODO: Mapowanie roli użytkownika z bazy danych.
 
         return ResponseEntity.ok(responseAuth);
     }

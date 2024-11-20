@@ -1,7 +1,7 @@
 package com.weeding.time.app.service;
 
+import com.weeding.time.app.builder.ApplicationUserMapper;
 import com.weeding.time.app.dto.ApplicationUserDto;
-import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.ApplicationUser;
 import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.model.Wedding;
@@ -13,14 +13,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -29,7 +27,10 @@ public class ApplicationUserService {
     @Autowired
     private ApplicationUserRepository applicationUserRepository;
 
-    @Autowired WeddingRepository weddingRepository;
+    @Autowired
+    private WeddingRepository weddingRepository;
+    @Autowired
+    private WeddingService weddingService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -37,77 +38,111 @@ public class ApplicationUserService {
     @Autowired
     private JWTService jwtService;
 
+    @Autowired
+    private ApplicationUserMapper applicationUserMapper;
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     @Transactional
-    public ApplicationUser registerUser(ApplicationUserDto applicationUserDto) {
-        // 1. Tworzymy nowe wesele
-        Wedding wedding = new Wedding();
-        wedding.setWeddingName(applicationUserDto.getFirstName() + " " + applicationUserDto.getLastName() + " Wedding");
-        wedding.setWeddingDate(applicationUserDto.getWeeding().getWeddingDate());
-        wedding.setLocation(null); // Przykładowa lokalizacja
-        wedding.setCreatedAt(java.time.LocalDateTime.now()); // Ustawiamy datę utworzenia
+    public ApplicationUserDto registerUser(ApplicationUserDto applicationUserDto) {
+        validateUserRole(applicationUserDto);
 
-        // Generowanie accessCode dla "Pan Młody" i "Panna Młoda"
-        if (applicationUserDto.getRole().equals("Panna Młoda") || applicationUserDto.getRole().equals("Pan Młody")) {
-            wedding.setAccessCode(UUID.randomUUID().toString());  // Generowanie unikalnego accessCode
-        } else {
-            wedding.setAccessCode(applicationUserDto.getWeeding().getAccessCode()); // Używamy podanego accessCode
-        }
+        // Mapowanie DTO na encję
+        ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
 
-        // 2. Zapisujemy wesele
+        // Tworzenie wesela, jeśli dotyczy
+        Wedding wedding = applicationUserDto.getWeeding() != null
+                ? applicationUserDto.getWeeding()
+                : createWedding(applicationUserDto);
+
         Wedding savedWedding = weddingRepository.save(wedding);
+        applicationUser.setWedding(savedWedding);
 
-        // 3. Tworzymy użytkownika
-        ApplicationUser applicationUser = new ApplicationUser();
-        applicationUser.setFirstName(applicationUserDto.getFirstName());
-        applicationUser.setLastName(applicationUserDto.getLastName());
-        applicationUser.setEmail(applicationUserDto.getEmail());
-        applicationUser.setPhoneNumber(applicationUserDto.getPhoneNumber());
-        applicationUser.setRole(applicationUserDto.getRole());
-        applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword())); // Szyfrowanie hasła
-        applicationUser.setWedding(savedWedding); // Przypisujemy wesele do użytkownika
+        // Szyfrowanie hasła
+        applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
 
-        // 4. Zapisujemy użytkownika
-        return applicationUserRepository.save(applicationUser);
+        // Zapis użytkownika w bazie
+        ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
+
+        return applicationUserMapper.toDto(savedUser);
     }
 
+    private void validateUserRole(ApplicationUserDto applicationUserDto) {
+        String role = applicationUserDto.getRole();
+        String accessCode = applicationUserDto.getWeeding() != null
+                ? applicationUserDto.getWeeding().getAccessCode()
+                : null;
 
+        switch (role) {
+            case "Pan Młody":
+            case "Panna Młoda":
+                if (applicationUserDto.getWeeding() == null) {
+                    applicationUserDto.setWeeding(createWedding(applicationUserDto));
+                }
+                break;
+            case "Gość":
+            case "Świadek":
+                if (accessCode == null || !weddingService.isValidAccessCode(accessCode)) {
+                    throw new IllegalArgumentException("Invalid access code for role: " + role);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown user role: " + role);
+        }
+    }
 
-    public Map<String, String> verify(ApplicationUser applicationUser) {
+    private String generateWeddingName(ApplicationUserDto applicationUserDto) {
+        return switch (applicationUserDto.getRole()) {
+            case "Panna Młoda" -> applicationUserDto.getFirstName() + "'s Wedding";
+            case "Pan Młody" -> "Wedding of " + applicationUserDto.getFirstName();
+            default -> "Wesele";
+        };
+    }
+
+    private Wedding createWedding(ApplicationUserDto applicationUserDto) {
+        String weddingName = generateWeddingName(applicationUserDto);
+        return Wedding.builder()
+                .weddingName(weddingName)
+                .weddingDate(LocalDate.now().plusMonths(6)) // Przykładowa data
+                .location("Default Location")
+                .accessCode(UUID.randomUUID().toString().replace("-", "").substring(0, 15))
+                .build();
+    }
+
+    public Map<String, String> verify(ApplicationUserDto applicationUserDto) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(applicationUser.getEmail(), applicationUser.getEncryptedPassword())
+                new UsernamePasswordAuthenticationToken(
+                        applicationUserDto.getEmail(),
+                        applicationUserDto.getEncryptedPassword()
+                )
         );
 
-        if (authentication.isAuthenticated()) {
-            ApplicationUser user = applicationUserRepository.findByEmail(applicationUser.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
-
-            return jwtService.generateTokens(user.getEmail(), user.getRole());
-        } else {
+        if (!authentication.isAuthenticated()) {
             throw new RuntimeException("Uwierzytelnienie nie powiodło się.");
         }
+
+        ApplicationUser user = applicationUserRepository.findByEmail(applicationUserDto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
+
+        return jwtService.generateTokens(user.getEmail(), user.getRole());
     }
 
     public Map<String, String> refreshAccessToken(String refreshToken, String email) {
-        // Znalezienie użytkownika po adresie email
         ApplicationUser applicationUser = applicationUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Użytkownik nie znaleziony"));
 
-        // Walidacja refresh tokena i generowanie nowego access tokena
         UserDetails userDetails = new UserPrincipal(applicationUser);
         String newAccessToken = jwtService.refreshAccessToken(refreshToken, userDetails);
 
-        // Zwracamy nowy access token
         Map<String, String> tokens = new HashMap<>();
         tokens.put("accessToken", newAccessToken);
         return tokens;
     }
+
     public boolean isAccessTokenValid(String accessToken) {
         return jwtService.isAccessTokenValid(accessToken);
     }
 
-    // Nowa metoda do sprawdzenia poprawności refresh tokena
     public boolean isRefreshTokenValid(String refreshToken) {
         return jwtService.isRefreshTokenValid(refreshToken);
     }

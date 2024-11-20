@@ -3,7 +3,7 @@ CREATE TABLE wedding (
                           wedding_name VARCHAR(100) NOT NULL,
                           wedding_date DATE,
                           location VARCHAR(255),
-                          accessCode VARCHAR(20) UNIQUE,
+                          access_code VARCHAR(20) UNIQUE,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE application_user (
@@ -28,9 +28,10 @@ INSERT INTO application_user (email, encrypted_password, first_name, last_name, 
 VALUES
     ('nobis171wp.pl', '$2y$12$I1NKGY1Vms5tW0nocLjituayDOtaZPRgyc9885IZGqEfpTbE2f7zm', 'Wiktor', 'Nobis', '123456789', 'ADMIN');
 
-INSERT INTO wedding (wedding_id, wedding_name, wedding_date, location, accessCode, application_user_id)
+INSERT INTO wedding (wedding_name, wedding_date, location, access_code, application_user_id)
 VALUES
-    (1, 'Wesele Wiktor-Wiktoria', CURRENT_DATE, 'Warszawa', 'ABC123', 1);
+    ('Wesele Wiktor-Wiktoria', CURRENT_DATE, 'Warszawa', 'ABC123', 1);
+
 
 
 
@@ -40,4 +41,5 @@ ALTER TABLE wedding
 -- Usunięcie klucza obcego z tabeli 'application_user'
 ALTER TABLE application_user
     DROP CONSTRAINT application_user_wedding_id_fkey;
+
 

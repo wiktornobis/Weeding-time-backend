@@ -16,6 +16,5 @@ public class ApplicationUserDto {
     private String role;
     private String email;
     private String phoneNumber;
-    private Date weedingDate;
     private Wedding weeding;
 }

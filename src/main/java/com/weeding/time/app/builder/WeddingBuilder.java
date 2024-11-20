@@ -20,7 +20,6 @@ public class WeddingBuilder {
                 .location(wedding.getLocation())
                 .accessCode(wedding.getAccessCode())
                 .createdAt(wedding.getCreatedAt())
-                .applicationUserId(Long.valueOf(wedding.getApplicationUser() != null ? wedding.getApplicationUser().getId(): null))  // Dodanie userId z ApplicationUser
                 .build();
     }
 

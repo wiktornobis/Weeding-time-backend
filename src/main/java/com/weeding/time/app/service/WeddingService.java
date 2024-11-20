@@ -1,5 +1,7 @@
 package com.weeding.time.app.service;
 
+import com.weeding.time.app.builder.WeddingBuilder;
+import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.WeddingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,50 +15,64 @@ public class WeddingService {
     @Autowired
     private WeddingRepository weddingRepository;
 
+    @Autowired
+    private WeddingBuilder weddingBuilder;  // Wstrzykujemy WeddingBuilder do serwisu, aby konwertować do DTO
+
+    // Sprawdzanie, czy kod dostępu jest poprawny
     public boolean isValidAccessCode(String accessCode) {
-        // Sprawdzamy, czy kod dostępu istnieje w bazie danych wesela
         return weddingRepository.existsByAccessCode(accessCode);
     }
 
-    // Metoda zwracająca wesele po jego ID
+    // Zwracanie wesela po jego ID (model Wedding)
     public Optional<Wedding> findWeddingById(Long weddingId) {
         return weddingRepository.findById(weddingId);
     }
 
-    // Metoda zwracająca wszystkie wesela
+    // Zwracanie wszystkich wesel (model Wedding)
     public List<Wedding> findAllWeddings() {
         return weddingRepository.findAll();
     }
 
-    // Metoda do tworzenia nowego wesela
+    // Tworzenie nowego wesela
     public Wedding createWedding(Wedding wedding) {
-        // Można dodać logikę walidacji przed zapisaniem, np. sprawdzenie czy kod dostępu jest unikalny
+        // Walidacja unikalności kodu dostępu
         if (weddingRepository.existsByAccessCode(wedding.getAccessCode())) {
             throw new IllegalArgumentException("Access code must be unique");
         }
         return weddingRepository.save(wedding);
     }
 
+    // Zapisywanie wesela (model Wedding)
     public Wedding saveWedding(Wedding wedding) {
-        return weddingRepository.save(wedding); // Save wedding to the database
+        return weddingRepository.save(wedding);
     }
 
-    // Metoda do aktualizacji istniejącego wesela
+    // Aktualizacja istniejącego wesela
     public Wedding updateWedding(Long weddingId, Wedding updatedWedding) {
-        // Sprawdzamy, czy wesele o podanym ID istnieje
         if (!weddingRepository.existsById(weddingId)) {
             throw new IllegalArgumentException("Wedding with the given ID does not exist");
         }
-        updatedWedding.setWeddingId(weddingId); // Ustawiamy ID, aby zachować poprawność encji
+        updatedWedding.setWeddingId(weddingId);
         return weddingRepository.save(updatedWedding);
     }
 
-    // Metoda do usunięcia wesela
+    // Usunięcie wesela
     public void deleteWedding(Long weddingId) {
-        // Sprawdzamy, czy wesele o podanym ID istnieje
         if (!weddingRepository.existsById(weddingId)) {
             throw new IllegalArgumentException("Wedding with the given ID does not exist");
         }
         weddingRepository.deleteById(weddingId);
+    }
+
+    // Metoda konwertująca Wedding na WeddingDto
+    public WeddingDto convertToDto(Wedding wedding) {
+        return weddingBuilder.buildDto(wedding); // Zbudowanie WeddingDto za pomocą WeddingBuilder
+    }
+
+    // Metoda konwertująca listę Wedding na listę WeddingDto
+    public List<WeddingDto> convertToDtoList(List<Wedding> weddings) {
+        return weddings.stream()
+                .map(weddingBuilder::buildDto)  // Dla każdego Wedding wywołujemy buildDto
+                .toList();
     }
 }
