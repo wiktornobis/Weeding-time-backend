@@ -1,6 +1,6 @@
 package com.weeding.time.app.service;
 
-import com.weeding.time.app.builder.WeddingBuilder;
+import com.weeding.time.app.builder.WeddingMapper;
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.WeddingRepository;
@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class WeddingService {
@@ -16,9 +17,8 @@ public class WeddingService {
     private WeddingRepository weddingRepository;
 
     @Autowired
-    private WeddingBuilder weddingBuilder;  // Wstrzykujemy WeddingBuilder do serwisu, aby konwertować do DTO
+    private WeddingMapper weddingMapper;
 
-    // Sprawdzanie, czy kod dostępu jest poprawny
     public boolean isValidAccessCode(String accessCode) {
         return weddingRepository.existsByAccessCode(accessCode);
     }
@@ -66,13 +66,13 @@ public class WeddingService {
 
     // Metoda konwertująca Wedding na WeddingDto
     public WeddingDto convertToDto(Wedding wedding) {
-        return weddingBuilder.buildDto(wedding); // Zbudowanie WeddingDto za pomocą WeddingBuilder
+        return weddingMapper.toDto(wedding);  // Zbudowanie WeddingDto za pomocą WeddingMapper
     }
 
     // Metoda konwertująca listę Wedding na listę WeddingDto
     public List<WeddingDto> convertToDtoList(List<Wedding> weddings) {
         return weddings.stream()
-                .map(weddingBuilder::buildDto)  // Dla każdego Wedding wywołujemy buildDto
-                .toList();
+                .map(weddingMapper::toDto)  // Dla każdego Wedding wywołujemy toDto
+                .collect(Collectors.toList());
     }
 }

@@ -3,11 +3,12 @@ package com.weeding.time.app.controller;
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.service.WeddingService;
-import com.weeding.time.app.builder.WeddingBuilder;
+import com.weeding.time.app.builder.WeddingMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/weddings")
@@ -17,30 +18,27 @@ public class WeddingController {
     private WeddingService weddingService;
 
     @Autowired
-    private WeddingBuilder weddingBuilder;
+    private WeddingMapper weddingMapper;
 
-    // Przykładowa metoda zwracająca WeddingDTO
     @GetMapping("/{id}")
     public WeddingDto getWeddingById(@PathVariable Long id) {
         return weddingService.findWeddingById(id)
-                .map(weddingBuilder::buildDto)  // If present, map to DTO
+                .map(weddingMapper::toDto)  // Mapowanie z Wedding na WeddingDto
                 .orElseThrow(() -> new IllegalArgumentException("Wedding not found"));
     }
 
-    // Przykładowa metoda zwracająca listę WeddingDTO
     @GetMapping
     public List<WeddingDto> getAllWeddings() {
         List<Wedding> weddings = weddingService.findAllWeddings();
         return weddings.stream()
-                .map(weddingBuilder::buildDto) // Użycie buildera do konwersji na DTO
-                .toList();
+                .map(weddingMapper::toDto) // Mapowanie każdego Wedding na WeddingDto
+                .collect(Collectors.toList());  // Użycie Collectors.toList() dla kompatybilności z Java 11 i wcześniejszymi
     }
 
-    // Przykładowa metoda tworzenia nowego wesela
     @PostMapping
-    public WeddingDto createWedding(@RequestBody WeddingDto weddingDTO) {
-        Wedding wedding = weddingBuilder.buildDomain(weddingDTO); // Przekształcenie DTO na encję
-        Wedding createdWedding = weddingService.saveWedding(wedding);
-        return weddingBuilder.buildDto(createdWedding);
+    public WeddingDto createWedding(@RequestBody WeddingDto weddingDto) {
+        Wedding wedding = weddingMapper.toEntity(weddingDto); // Przekształcenie WeddingDto na Wedding (encję)
+        Wedding createdWedding = weddingService.saveWedding(wedding);  // Zapisanie wesela
+        return weddingMapper.toDto(createdWedding);  // Zwrócenie WeddingDto
     }
 }

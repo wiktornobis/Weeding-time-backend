@@ -16,7 +16,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +46,6 @@ public class ApplicationUserService {
     public ApplicationUserDto registerUser(ApplicationUserDto applicationUserDto) {
         validateUserRole(applicationUserDto);
 
-        // Mapowanie DTO na encję
         ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
 
         // Tworzenie wesela, jeśli dotyczy
@@ -57,11 +55,8 @@ public class ApplicationUserService {
 
         Wedding savedWedding = weddingRepository.save(wedding);
         applicationUser.setWedding(savedWedding);
-
-        // Szyfrowanie hasła
         applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
 
-        // Zapis użytkownika w bazie
         ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
 
         return applicationUserMapper.toDto(savedUser);
@@ -103,9 +98,8 @@ public class ApplicationUserService {
         String weddingName = generateWeddingName(applicationUserDto);
         return Wedding.builder()
                 .weddingName(weddingName)
-                .weddingDate(LocalDate.now().plusMonths(6)) // Przykładowa data
-                .location("Default Location")
-                .accessCode(UUID.randomUUID().toString().replace("-", "").substring(0, 15))
+                .weddingDate(applicationUserDto.getWeeding().getWeddingDate())
+                .accessCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase())
                 .build();
     }
 

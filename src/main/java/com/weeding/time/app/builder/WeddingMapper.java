@@ -2,17 +2,14 @@ package com.weeding.time.app.builder;
 
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.Wedding;
+import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class WeddingBuilder {
+public class WeddingMapper {
 
-    // Budowanie DTO z encji Wedding
-    public WeddingDto buildDto(Wedding wedding) {
-        if (wedding == null) {
-            throw new IllegalArgumentException("Wedding cannot be null");
-        }
-
+    // Metoda konwertująca Wedding na WeddingDto
+    public WeddingDto toDto(@NonNull Wedding wedding) {
         return WeddingDto.builder()
                 .weddingId(wedding.getWeddingId())
                 .weddingName(wedding.getWeddingName())
@@ -23,12 +20,8 @@ public class WeddingBuilder {
                 .build();
     }
 
-    // Konwersja z DTO WeddingDto do encji Wedding
-    public Wedding buildDomain(WeddingDto weddingDto) {
-        if (weddingDto == null) {
-            throw new IllegalArgumentException("WeddingDTO cannot be null");
-        }
-
+    // Metoda konwertująca WeddingDto na Wedding
+    public Wedding toEntity(WeddingDto weddingDto) {
         return Wedding.builder()
                 .weddingId(weddingDto.getWeddingId())
                 .weddingName(weddingDto.getWeddingName())

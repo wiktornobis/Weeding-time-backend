@@ -13,11 +13,11 @@ public class ApplicationUserMapper {
                 .id(applicationUser.getId())
                 .firstName(applicationUser.getFirstName())
                 .lastName(applicationUser.getLastName())
-                .encryptedPassword(applicationUser.getEncryptedPassword()) // jeśli konieczne
+                .encryptedPassword(applicationUser.getEncryptedPassword())
                 .role(applicationUser.getRole())
                 .email(applicationUser.getEmail() != null ? applicationUser.getEmail().toLowerCase() : null)
                 .phoneNumber(applicationUser.getPhoneNumber())
-                .weeding(applicationUser.getWedding()) // lub popraw "weeding" na "wedding"
+                .weeding(applicationUser.getWedding())
                 .build();
     }
 
@@ -29,7 +29,7 @@ public class ApplicationUserMapper {
                 .role(dto.getRole())
                 .email(dto.getEmail() != null ? dto.getEmail().toLowerCase() : null)
                 .phoneNumber(dto.getPhoneNumber())
-                .wedding(dto.getWeeding()) // lub popraw na "wedding"
+                .wedding(dto.getWeeding())
                 .build();
     }
 }
