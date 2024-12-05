@@ -17,11 +17,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ApplicationUserService {
@@ -47,13 +47,18 @@ public class ApplicationUserService {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-    @Transactional
     public ApplicationUserDto registerUser(ApplicationUserDto applicationUserDto) {
-        ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
+        String email = applicationUserDto.getEmail();
+        Optional<ApplicationUser> existingUser = applicationUserRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException("Podany adres e-mail jest już zajęty.");
+        }
 
+        ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
         Wedding wedding = null;
         ApplicationUserRole role = ApplicationUserRole.fromDisplayName(applicationUserDto.getRole());
 
+        // Obsługa ról 'Panna Młoda', 'Pan Młody' i 'Gość'
         if (Arrays.asList(ApplicationUserRole.BRIDE, ApplicationUserRole.GROOM).contains(role)) {
             if (applicationUserDto.getWeeding() == null) {
                 WeddingDto weddingDto = new WeddingDto();
@@ -63,7 +68,7 @@ public class ApplicationUserService {
                 wedding = weddingRepository.findById(Long.valueOf(applicationUserDto.getAccessCode()))
                         .orElseThrow(() -> new IllegalArgumentException("Wesele nie znalezione"));
             }
-        } else if (role == ApplicationUserRole.GUEST) {
+        } else if (Arrays.asList(ApplicationUserRole.GUEST, ApplicationUserRole.WITNESS).contains(role)) {
             String accessCode = applicationUserDto.getAccessCode();
             wedding = weddingRepository.findByAccessCode(accessCode)
                     .orElseThrow(() -> new IllegalArgumentException("Kod dostępu nie pasuje do żadnego wesela"));
@@ -71,13 +76,13 @@ public class ApplicationUserService {
             throw new IllegalArgumentException("Nieznana rola");
         }
 
-        // Przypisanie wesela do użytkownika
         applicationUser.setWedding(wedding);
         applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
-
         ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
+
         return applicationUserMapper.toDto(savedUser);
     }
+
 
     public Map<String, String> verify(ApplicationUserDto applicationUserDto) {
         Authentication authentication = authenticationManager.authenticate(

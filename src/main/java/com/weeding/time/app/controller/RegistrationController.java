@@ -20,15 +20,25 @@ public class RegistrationController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> register(@RequestBody ApplicationUserDto applicationUserDto) {
-        // Rejestracja użytkownika
-        ApplicationUserDto registeredUser = applicationUserService.registerUser(applicationUserDto);
-
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("status", HttpStatus.CREATED);
-        responseMap.put("user_id", registeredUser.getId());
-        responseMap.put("email", registeredUser.getEmail());
-        responseMap.put("role", registeredUser.getRole());
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseMap);
-    }
 
+        try {
+            // Rejestracja użytkownika
+            ApplicationUserDto registeredUser = applicationUserService.registerUser(applicationUserDto);
+
+            responseMap.put("status", HttpStatus.CREATED.value());
+            responseMap.put("message", "Rejestracja zakończona sukcesem");
+            responseMap.put("user_id", registeredUser.getId());
+            responseMap.put("email", registeredUser.getEmail());
+            responseMap.put("role", registeredUser.getRole());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(responseMap);
+
+        } catch (Exception e) {
+            responseMap.put("status", HttpStatus.BAD_REQUEST.value());
+            responseMap.put("message", e.getMessage());  // Zwrócenie szczegółowego komunikatu błędu
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMap);
+        }
+    }
 }
