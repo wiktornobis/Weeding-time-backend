@@ -1,12 +1,15 @@
 package com.weeding.time.app.service;
 
 import com.weeding.time.app.builder.ApplicationUserMapper;
+import com.weeding.time.app.builder.WeddingMapper;
 import com.weeding.time.app.dto.ApplicationUserDto;
+import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.ApplicationUser;
 import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.ApplicationUserRepository;
 import com.weeding.time.app.repository.WeddingRepository;
+import com.weeding.time.app.types.ApplicationUserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,9 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class ApplicationUserService {
@@ -36,6 +39,8 @@ public class ApplicationUserService {
 
     @Autowired
     private JWTService jwtService;
+    @Autowired
+    private WeddingMapper weddingMapper;
 
     @Autowired
     private ApplicationUserMapper applicationUserMapper;
@@ -44,63 +49,34 @@ public class ApplicationUserService {
 
     @Transactional
     public ApplicationUserDto registerUser(ApplicationUserDto applicationUserDto) {
-        validateUserRole(applicationUserDto);
-
         ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
 
-        // Tworzenie wesela, jeśli dotyczy
-        Wedding wedding = applicationUserDto.getWeeding() != null
-                ? applicationUserDto.getWeeding()
-                : createWedding(applicationUserDto);
+        Wedding wedding = null;
+        ApplicationUserRole role = ApplicationUserRole.fromDisplayName(applicationUserDto.getRole());
 
-        Wedding savedWedding = weddingRepository.save(wedding);
-        applicationUser.setWedding(savedWedding);
+        if (Arrays.asList(ApplicationUserRole.BRIDE, ApplicationUserRole.GROOM).contains(role)) {
+            if (applicationUserDto.getWeeding() == null) {
+                WeddingDto weddingDto = new WeddingDto();
+                weddingDto.setWeddingDate(applicationUserDto.getWeddingDate());
+                wedding = weddingService.createWedding(weddingDto);
+            } else {
+                wedding = weddingRepository.findById(Long.valueOf(applicationUserDto.getAccessCode()))
+                        .orElseThrow(() -> new IllegalArgumentException("Wesele nie znalezione"));
+            }
+        } else if (role == ApplicationUserRole.GUEST) {
+            String accessCode = applicationUserDto.getAccessCode();
+            wedding = weddingRepository.findByAccessCode(accessCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Kod dostępu nie pasuje do żadnego wesela"));
+        } else {
+            throw new IllegalArgumentException("Nieznana rola");
+        }
+
+        // Przypisanie wesela do użytkownika
+        applicationUser.setWedding(wedding);
         applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
 
         ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
-
         return applicationUserMapper.toDto(savedUser);
-    }
-
-    private void validateUserRole(ApplicationUserDto applicationUserDto) {
-        String role = applicationUserDto.getRole();
-        String accessCode = applicationUserDto.getWeeding() != null
-                ? applicationUserDto.getWeeding().getAccessCode()
-                : null;
-
-        switch (role) {
-            case "Pan Młody":
-            case "Panna Młoda":
-                if (applicationUserDto.getWeeding() == null) {
-                    applicationUserDto.setWeeding(createWedding(applicationUserDto));
-                }
-                break;
-            case "Gość":
-            case "Świadek":
-                if (accessCode == null || !weddingService.isValidAccessCode(accessCode)) {
-                    throw new IllegalArgumentException("Invalid access code for role: " + role);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown user role: " + role);
-        }
-    }
-
-    private String generateWeddingName(ApplicationUserDto applicationUserDto) {
-        return switch (applicationUserDto.getRole()) {
-            case "Panna Młoda" -> applicationUserDto.getFirstName() + "'s Wedding";
-            case "Pan Młody" -> "Wedding of " + applicationUserDto.getFirstName();
-            default -> "Wesele";
-        };
-    }
-
-    private Wedding createWedding(ApplicationUserDto applicationUserDto) {
-        String weddingName = generateWeddingName(applicationUserDto);
-        return Wedding.builder()
-                .weddingName(weddingName)
-                .weddingDate(applicationUserDto.getWeeding().getWeddingDate())
-                .accessCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase())
-                .build();
     }
 
     public Map<String, String> verify(ApplicationUserDto applicationUserDto) {

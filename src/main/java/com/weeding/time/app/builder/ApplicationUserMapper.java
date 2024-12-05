@@ -17,6 +17,7 @@ public class ApplicationUserMapper {
                 .role(applicationUser.getRole())
                 .email(applicationUser.getEmail() != null ? applicationUser.getEmail().toLowerCase() : null)
                 .phoneNumber(applicationUser.getPhoneNumber())
+                .weddingDate(applicationUser.getWedding().getWeddingDate())
                 .weeding(applicationUser.getWedding())
                 .build();
     }

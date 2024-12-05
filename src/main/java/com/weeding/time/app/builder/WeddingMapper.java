@@ -31,4 +31,5 @@ public class WeddingMapper {
                 .createdAt(weddingDto.getCreatedAt())
                 .build();
     }
+
 }

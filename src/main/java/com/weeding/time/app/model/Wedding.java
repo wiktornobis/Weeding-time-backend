@@ -40,7 +40,6 @@ public class Wedding {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // Relacja wiele-do-jednego - jedno wesele ma wielu użytkowników
     @OneToMany(mappedBy = "wedding", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private List<ApplicationUser> users;
 

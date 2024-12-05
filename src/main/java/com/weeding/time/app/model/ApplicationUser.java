@@ -24,7 +24,7 @@ public class ApplicationUser {
     private String email;
     private String phoneNumber;
     // Relacja wiele-do-jednego z Wedding
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "wedding_id", referencedColumnName = "wedding_id")
     private Wedding wedding;
 }

@@ -6,9 +6,11 @@ import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.WeddingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 public class WeddingService {
@@ -19,35 +21,31 @@ public class WeddingService {
     @Autowired
     private WeddingMapper weddingMapper;
 
-    public boolean isValidAccessCode(String accessCode) {
-        return weddingRepository.existsByAccessCode(accessCode);
-    }
-
-    // Zwracanie wesela po jego ID (model Wedding)
     public Optional<Wedding> findWeddingById(Long weddingId) {
         return weddingRepository.findById(weddingId);
     }
 
-    // Zwracanie wszystkich wesel (model Wedding)
     public List<Wedding> findAllWeddings() {
         return weddingRepository.findAll();
     }
 
-    // Tworzenie nowego wesela
-    public Wedding createWedding(Wedding wedding) {
-        // Walidacja unikalności kodu dostępu
-        if (weddingRepository.existsByAccessCode(wedding.getAccessCode())) {
-            throw new IllegalArgumentException("Access code must be unique");
-        }
-        return weddingRepository.save(wedding);
+    public Wedding createWedding(WeddingDto weddingDto) {
+        Wedding wedding = weddingMapper.toEntity(weddingDto);
+        // Ustawianie dodatkowych pól, które nie pochodzą z DTO
+        wedding.setWeddingName("");
+        wedding.setAccessCode(generateAccessCode());
+        wedding.setCreatedAt(LocalDateTime.now()); // Bieżąca data i czas
+        return wedding;
     }
 
-    // Zapisywanie wesela (model Wedding)
+    private String generateAccessCode() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+    }
+
     public Wedding saveWedding(Wedding wedding) {
         return weddingRepository.save(wedding);
     }
 
-    // Aktualizacja istniejącego wesela
     public Wedding updateWedding(Long weddingId, Wedding updatedWedding) {
         if (!weddingRepository.existsById(weddingId)) {
             throw new IllegalArgumentException("Wedding with the given ID does not exist");
@@ -56,23 +54,10 @@ public class WeddingService {
         return weddingRepository.save(updatedWedding);
     }
 
-    // Usunięcie wesela
     public void deleteWedding(Long weddingId) {
         if (!weddingRepository.existsById(weddingId)) {
             throw new IllegalArgumentException("Wedding with the given ID does not exist");
         }
         weddingRepository.deleteById(weddingId);
-    }
-
-    // Metoda konwertująca Wedding na WeddingDto
-    public WeddingDto convertToDto(Wedding wedding) {
-        return weddingMapper.toDto(wedding);  // Zbudowanie WeddingDto za pomocą WeddingMapper
-    }
-
-    // Metoda konwertująca listę Wedding na listę WeddingDto
-    public List<WeddingDto> convertToDtoList(List<Wedding> weddings) {
-        return weddings.stream()
-                .map(weddingMapper::toDto)  // Dla każdego Wedding wywołujemy toDto
-                .collect(Collectors.toList());
     }
 }
