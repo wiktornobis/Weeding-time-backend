@@ -10,6 +10,8 @@ import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.ApplicationUserRepository;
 import com.weeding.time.app.repository.WeddingRepository;
 import com.weeding.time.app.types.ApplicationUserRole;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +27,7 @@ import java.util.Optional;
 
 @Service
 public class ApplicationUserService {
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationUserService.class);
 
     @Autowired
     private ApplicationUserRepository applicationUserRepository;
@@ -39,8 +42,6 @@ public class ApplicationUserService {
 
     @Autowired
     private JWTService jwtService;
-    @Autowired
-    private WeddingMapper weddingMapper;
 
     @Autowired
     private ApplicationUserMapper applicationUserMapper;
@@ -51,12 +52,15 @@ public class ApplicationUserService {
         String email = applicationUserDto.getEmail();
         Optional<ApplicationUser> existingUser = applicationUserRepository.findByEmail(email);
         if (existingUser.isPresent()) {
+            logger.warn("Attempt to register with an already taken email: {}", email);
             throw new IllegalArgumentException("Podany adres e-mail jest już zajęty.");
         }
 
         ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
+        logger.debug("Mapped ApplicationUserDto to entity: {}", applicationUser);
         Wedding wedding = null;
         ApplicationUserRole role = ApplicationUserRole.fromDisplayName(applicationUserDto.getRole());
+        logger.info("Processing role: {}", role);
 
         // Obsługa ról 'Panna Młoda', 'Pan Młody' i 'Gość'
         if (Arrays.asList(ApplicationUserRole.BRIDE, ApplicationUserRole.GROOM).contains(role)) {
@@ -79,7 +83,7 @@ public class ApplicationUserService {
         applicationUser.setWedding(wedding);
         applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
         ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
-
+        logger.info("Successfully registered user with email: {} and role: {}", savedUser.getEmail(), role);
         return applicationUserMapper.toDto(savedUser);
     }
 

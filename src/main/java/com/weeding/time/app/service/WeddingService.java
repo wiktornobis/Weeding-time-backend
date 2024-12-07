@@ -4,6 +4,8 @@ import com.weeding.time.app.builder.WeddingMapper;
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.WeddingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @Service
 public class WeddingService {
+    private static final Logger logger = LoggerFactory.getLogger(WeddingService.class);
 
     @Autowired
     private WeddingRepository weddingRepository;
@@ -30,11 +33,15 @@ public class WeddingService {
     }
 
     public Wedding createWedding(WeddingDto weddingDto) {
+        logger.info("Creating a new wedding with data: {}", weddingDto);
+
         Wedding wedding = weddingMapper.toEntity(weddingDto);
+
         // Ustawianie dodatkowych pól, które nie pochodzą z DTO
-        wedding.setWeddingName("");
         wedding.setAccessCode(generateAccessCode());
-        wedding.setCreatedAt(LocalDateTime.now()); // Bieżąca data i czas
+        wedding.setCreatedAt(LocalDateTime.now());
+        logger.info("Successfully created a Wedding entity: {}", wedding);
+
         return wedding;
     }
 

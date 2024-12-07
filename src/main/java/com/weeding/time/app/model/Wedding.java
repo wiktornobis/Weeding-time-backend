@@ -24,13 +24,13 @@ public class Wedding {
     @Column(name = "wedding_id")
     private Long weddingId;
 
-    @Column(name = "wedding_name", nullable = false, length = 100)
+    @Column(name = "wedding_name", length = 128)
     private String weddingName;
 
     @Column(name = "wedding_date")
     private LocalDate weddingDate;
 
-    @Column(name = "location", length = 255)
+    @Column(name = "location")
     private String location;
 
     @Column(name = "access_code", unique = true, length = 20)

@@ -1,42 +1,38 @@
 CREATE TABLE wedding (
                           wedding_id SERIAL PRIMARY KEY,
-                          wedding_name VARCHAR(100) NOT NULL,
+                          wedding_name VARCHAR(128) NOT NULL,
                           wedding_date DATE,
                           location VARCHAR(255),
                           access_code VARCHAR(20) UNIQUE,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
 );
 CREATE TABLE application_user (
-                                  id SERIAL PRIMARY KEY,
-                                  email VARCHAR(255) NOT NULL UNIQUE,
-                                  encrypted_password VARCHAR(255) NOT NULL,
-                                  first_name VARCHAR(50) NOT NULL,
-                                  last_name VARCHAR(50) NOT NULL,
-                                  phone_number VARCHAR(15),
-                                  role VARCHAR(20) NOT NULL,
-                                  wedding_id INT,
-                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                  FOREIGN KEY (wedding_id) REFERENCES wedding(wedding_id) -- Klucz obcy do tabeli "weddings"
+                  id SERIAL PRIMARY KEY,
+                  first_name VARCHAR(128) NOT NULL,
+                  last_name VARCHAR(128) NOT NULL,
+                  email VARCHAR(128) NOT NULL UNIQUE,
+                  encrypted_password VARCHAR(64) NOT NULL,
+                  phone_number VARCHAR(20),
+                  role VARCHAR(40) NOT NULL,
+                  wedding_id INT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY (wedding_id) REFERENCES wedding(wedding_id) ON DELETE SET NULL
 );
-ALTER TABLE wedding
-    ADD COLUMN application_user_id INTEGER,
-    ADD CONSTRAINT fk_application_user
-        FOREIGN KEY (application_user_id) REFERENCES application_user(id);
 
 
 INSERT INTO application_user (email, encrypted_password, first_name, last_name, phone_number, role)
 VALUES
     ('nobis171wp.pl', '$2y$12$I1NKGY1Vms5tW0nocLjituayDOtaZPRgyc9885IZGqEfpTbE2f7zm', 'Wiktor', 'Nobis', '123456789', 'ADMIN');
 
-INSERT INTO wedding (wedding_name, wedding_date, location, access_code, application_user_id)
+INSERT INTO wedding (wedding_name, wedding_date, location, access_code)
 VALUES
-    ('Wesele Wiktor-Wiktoria', CURRENT_DATE, 'Warszawa', 'ABC123', 1);
+    ('Wesele Wiktor-Wiktoria', CURRENT_DATE, 'Warszawa', 'ABC123');
 
 
 
 
-ALTER TABLE wedding
-    DROP CONSTRAINT fk_application_user;
+
 
 -- Usunięcie klucza obcego z tabeli 'application_user'
 ALTER TABLE application_user
