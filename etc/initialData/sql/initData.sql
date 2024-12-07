@@ -1,6 +1,6 @@
 CREATE TABLE wedding (
                           wedding_id SERIAL PRIMARY KEY,
-                          wedding_name VARCHAR(128) NOT NULL,
+                          wedding_name VARCHAR(128) DEFAULT NULL,
                           wedding_date DATE,
                           location VARCHAR(255),
                           access_code VARCHAR(20) UNIQUE,
@@ -17,7 +17,7 @@ CREATE TABLE application_user (
                   role VARCHAR(40) NOT NULL,
                   wedding_id INT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (wedding_id) REFERENCES wedding(wedding_id) ON DELETE SET NULL
+                  CONSTRAINT fk_wedding_id FOREIGN KEY (wedding_id) REFERENCES wedding(wedding_id) ON DELETE SET NULL
 );
 
 
@@ -36,6 +36,6 @@ VALUES
 
 -- Usunięcie klucza obcego z tabeli 'application_user'
 ALTER TABLE application_user
-    DROP CONSTRAINT application_user_wedding_id_fkey;
+    DROP CONSTRAINT fk_wedding_id;
 
 
