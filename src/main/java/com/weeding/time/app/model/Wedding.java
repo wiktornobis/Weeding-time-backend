@@ -1,15 +1,14 @@
 package com.weeding.time.app.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -21,8 +20,8 @@ public class Wedding {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "wedding_id")
-    private Long weddingId;
+    @Column(name = "id")
+    private Long Id;
 
     @Column(name = "wedding_name", length = 128)
     private String weddingName;
@@ -39,8 +38,4 @@ public class Wedding {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "wedding", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private List<ApplicationUser> users;
-
 }

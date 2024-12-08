@@ -11,7 +11,7 @@ public class WeddingMapper {
     // Metoda konwertująca Wedding na WeddingDto
     public WeddingDto toDto(@NonNull Wedding wedding) {
         return WeddingDto.builder()
-                .weddingId(wedding.getWeddingId())
+                .weddingId(wedding.getId())
                 .weddingName(wedding.getWeddingName())
                 .weddingDate(wedding.getWeddingDate())
                 .location(wedding.getLocation())
@@ -23,7 +23,7 @@ public class WeddingMapper {
     // Metoda konwertująca WeddingDto na Wedding
     public Wedding toEntity(WeddingDto weddingDto) {
         return Wedding.builder()
-                .weddingId(weddingDto.getWeddingId())
+                .Id(weddingDto.getWeddingId())
                 .weddingName(weddingDto.getWeddingName())
                 .weddingDate(weddingDto.getWeddingDate())
                 .location(weddingDto.getLocation())

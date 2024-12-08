@@ -6,7 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -14,22 +15,29 @@ import java.util.Date;
 @Builder
 @Entity
 public class ApplicationUser {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-    @Column(length = 128, name="first_name")
+    private Long id;
+
+    @Column(length = 128, name = "first_name")
     private String firstName;
-    @Column(length = 128, name="last_name")
+
+    @Column(length = 128, name = "last_name")
     private String lastName;
-    @Column(length = 64, name="encrypted_password")
+
+    @Column(length = 64, name = "encrypted_password")
     private String encryptedPassword;
+
+    @Column(name = "email")
     private String email;
-    @Column(length = 20, name="phone_number")
+
+    @Column(length = 20, name = "phone_number")
     private String phoneNumber;
-    @Column(length = 40, name="role")
+
+    @Column(length = 40, name = "role")
     private String role;
-    // Relacja wiele-do-jednego z Wedding
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn(name = "wedding_id", referencedColumnName = "wedding_id")
-    private Wedding wedding;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ApplicationUserWedding> userWeddings = new HashSet<>();
 }

@@ -1,13 +1,14 @@
 package com.weeding.time.app.service;
 
 import com.weeding.time.app.builder.ApplicationUserMapper;
-import com.weeding.time.app.builder.WeddingMapper;
 import com.weeding.time.app.dto.ApplicationUserDto;
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.ApplicationUser;
+import com.weeding.time.app.model.ApplicationUserWedding;
 import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.ApplicationUserRepository;
+import com.weeding.time.app.repository.ApplicationUserWeddingRepository;
 import com.weeding.time.app.repository.WeddingRepository;
 import com.weeding.time.app.types.ApplicationUserRole;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +33,8 @@ public class ApplicationUserService {
 
     @Autowired
     private ApplicationUserRepository applicationUserRepository;
+    @Autowired
+    private ApplicationUserWeddingRepository applicationUserWeddingRepository;
 
     @Autowired
     private WeddingRepository weddingRepository;
@@ -50,42 +54,61 @@ public class ApplicationUserService {
 
     public ApplicationUserDto registerUser(ApplicationUserDto applicationUserDto) {
         String email = applicationUserDto.getEmail();
+
+        // Sprawdzanie, czy użytkownik z takim adresem e-mail już istnieje
         Optional<ApplicationUser> existingUser = applicationUserRepository.findByEmail(email);
         if (existingUser.isPresent()) {
             logger.warn("Attempt to register with an already taken email: {}", email);
             throw new IllegalArgumentException("Podany adres e-mail jest już zajęty.");
         }
 
+        // Mapowanie DTO na encję użytkownika
         ApplicationUser applicationUser = applicationUserMapper.toEntity(applicationUserDto);
-        logger.debug("Mapped ApplicationUserDto to entity: {}", applicationUser);
-        Wedding wedding = null;
-        ApplicationUserRole role = ApplicationUserRole.fromDisplayName(applicationUserDto.getRole());
-        logger.info("Processing role: {}", role);
-
-        // Obsługa ról 'Panna Młoda', 'Pan Młody' i 'Gość'
-        if (Arrays.asList(ApplicationUserRole.BRIDE, ApplicationUserRole.GROOM).contains(role)) {
-            if (applicationUserDto.getWeeding() == null) {
-                WeddingDto weddingDto = new WeddingDto();
-                weddingDto.setWeddingDate(applicationUserDto.getWeddingDate());
-                wedding = weddingService.createWedding(weddingDto);
-            } else {
-                wedding = weddingRepository.findById(Long.valueOf(applicationUserDto.getAccessCode()))
-                        .orElseThrow(() -> new IllegalArgumentException("Wesele nie znalezione"));
-            }
-        } else if (Arrays.asList(ApplicationUserRole.GUEST, ApplicationUserRole.WITNESS).contains(role)) {
-            String accessCode = applicationUserDto.getAccessCode();
-            wedding = weddingRepository.findByAccessCode(accessCode)
-                    .orElseThrow(() -> new IllegalArgumentException("Kod dostępu nie pasuje do żadnego wesela"));
-        } else {
-            throw new IllegalArgumentException("Nieznana rola");
-        }
-
-        applicationUser.setWedding(wedding);
         applicationUser.setEncryptedPassword(encoder.encode(applicationUserDto.getEncryptedPassword()));
-        ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
-        logger.info("Successfully registered user with email: {} and role: {}", savedUser.getEmail(), role);
-        return applicationUserMapper.toDto(savedUser);
+
+        Wedding wedding = null;
+        ApplicationUserRole role = ApplicationUserRole.displayRoleName(applicationUserDto.getRole());
+
+        try {
+            if (Arrays.asList(ApplicationUserRole.BRIDE, ApplicationUserRole.GROOM).contains(role)) {
+                if (applicationUserDto.getWedding() == null) {
+                    WeddingDto weddingDto = new WeddingDto();
+                    weddingDto.setWeddingDate(applicationUserDto.getWeddingDate());
+                    wedding = weddingService.createWedding(weddingDto);
+                    wedding = weddingRepository.save(wedding);
+                    logger.info("Utworzono nowe wesele o id: {}", wedding.getId());
+                }
+            } else if (Arrays.asList(ApplicationUserRole.GUEST, ApplicationUserRole.WITNESS).contains(role)) {
+                String accessCode = applicationUserDto.getAccessCode();
+                wedding = weddingRepository.findByAccessCode(accessCode)
+                        .orElseThrow(() -> new IllegalArgumentException("Kod dostępu nie pasuje do żadnego wesela"));
+            } else {
+                throw new IllegalArgumentException("Nieznana rola");
+            }
+
+            // Zapisanie użytkownika do bazy danych
+            ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
+            logger.info("Pomyślnie zarejestrowano użytkownika: {}", savedUser.getEmail());
+
+            // Tworzenie relacji użytkownika do wesela
+            if (wedding != null) {
+                ApplicationUserWedding userWedding = new ApplicationUserWedding();
+                userWedding.setUser(savedUser);
+                userWedding.setWedding(wedding);
+                userWedding.setJoinDate(LocalDateTime.now());
+
+                applicationUserWeddingRepository.save(userWedding);
+                logger.info("Użytkownik o id {} pomyślnie do wesela o id {}", savedUser.getId(), wedding.getId());
+            }
+
+            return applicationUserMapper.toDto(savedUser);
+
+        } catch (Exception exception) {
+            logger.error("Błąd podczas rejestracji: {}", exception.getMessage());
+            throw exception;
+        }
     }
+
 
 
     public Map<String, String> verify(ApplicationUserDto applicationUserDto) {

@@ -33,38 +33,19 @@ public class WeddingService {
     }
 
     public Wedding createWedding(WeddingDto weddingDto) {
-        logger.info("Creating a new wedding with data: {}", weddingDto);
-
         Wedding wedding = weddingMapper.toEntity(weddingDto);
-
         // Ustawianie dodatkowych pól, które nie pochodzą z DTO
         wedding.setAccessCode(generateAccessCode());
         wedding.setCreatedAt(LocalDateTime.now());
-        logger.info("Successfully created a Wedding entity: {}", wedding);
-
         return wedding;
     }
 
     private String generateAccessCode() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
     public Wedding saveWedding(Wedding wedding) {
         return weddingRepository.save(wedding);
     }
 
-    public Wedding updateWedding(Long weddingId, Wedding updatedWedding) {
-        if (!weddingRepository.existsById(weddingId)) {
-            throw new IllegalArgumentException("Wedding with the given ID does not exist");
-        }
-        updatedWedding.setWeddingId(weddingId);
-        return weddingRepository.save(updatedWedding);
-    }
-
-    public void deleteWedding(Long weddingId) {
-        if (!weddingRepository.existsById(weddingId)) {
-            throw new IllegalArgumentException("Wedding with the given ID does not exist");
-        }
-        weddingRepository.deleteById(weddingId);
-    }
 }

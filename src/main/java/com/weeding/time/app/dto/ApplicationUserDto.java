@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class ApplicationUserDto {
-    private Integer id;
+    private Long id;
     private String firstName;
     private String lastName;
     private String encryptedPassword;
@@ -22,5 +22,5 @@ public class ApplicationUserDto {
     private String phoneNumber;
     private LocalDate weddingDate;
     private String accessCode;
-    private Wedding weeding;
+    private Wedding wedding;
 }

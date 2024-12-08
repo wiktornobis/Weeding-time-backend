@@ -17,8 +17,6 @@ public class ApplicationUserMapper {
                 .role(applicationUser.getRole())
                 .email(applicationUser.getEmail() != null ? applicationUser.getEmail().toLowerCase() : null)
                 .phoneNumber(applicationUser.getPhoneNumber())
-                .weddingDate(applicationUser.getWedding().getWeddingDate())
-                .weeding(applicationUser.getWedding())
                 .build();
     }
 
@@ -30,7 +28,6 @@ public class ApplicationUserMapper {
                 .role(dto.getRole())
                 .email(dto.getEmail() != null ? dto.getEmail().toLowerCase() : null)
                 .phoneNumber(dto.getPhoneNumber())
-                .wedding(dto.getWeeding())
                 .build();
     }
 }

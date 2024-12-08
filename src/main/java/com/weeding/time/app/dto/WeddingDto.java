@@ -19,5 +19,5 @@ public class WeddingDto {
     private String location;
     private String accessCode;
     private LocalDateTime createdAt;
-    private Long applicationUserId;
+    private Integer applicationUserId;
 }

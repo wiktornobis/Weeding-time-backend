@@ -8,17 +8,17 @@ import lombok.RequiredArgsConstructor;
 public enum ApplicationUserRole {
 
     ADMIN("Admin"),          // Admin
-    GUEST("Gość"),           // Gość
-    GROOM("Pan młody"),      // Pan młody
     BRIDE("Panna młoda"),    // Panna młoda
+    GROOM("Pan młody"),      // Pan młody
+    GUEST("Gość"),           // Gość
     WITNESS("Świadek");      // Świadek
 
-    private final String displayName;
+    private final String displayRoleName;
 
     // Metoda statyczna do mapowania Stringa na enum
-    public static ApplicationUserRole fromDisplayName(String displayName) {
+    public static ApplicationUserRole displayRoleName(String displayName) {
         for (ApplicationUserRole role : ApplicationUserRole.values()) {
-            if (role.getDisplayName().equalsIgnoreCase(displayName)) {
+            if (role.getDisplayRoleName().equalsIgnoreCase(displayName)) {
                 return role;
             }
         }
