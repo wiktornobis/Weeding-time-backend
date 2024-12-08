@@ -4,7 +4,6 @@ import com.weeding.time.app.builder.ApplicationUserMapper;
 import com.weeding.time.app.dto.ApplicationUserDto;
 import com.weeding.time.app.dto.WeddingDto;
 import com.weeding.time.app.model.ApplicationUser;
-import com.weeding.time.app.model.ApplicationUserWedding;
 import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.ApplicationUserRepository;
@@ -21,7 +20,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,11 +31,13 @@ public class ApplicationUserService {
 
     @Autowired
     private ApplicationUserRepository applicationUserRepository;
+
     @Autowired
-    private ApplicationUserWeddingRepository applicationUserWeddingRepository;
+    private ApplicationUserWeddingService userWeddingService;
 
     @Autowired
     private WeddingRepository weddingRepository;
+
     @Autowired
     private WeddingService weddingService;
 
@@ -90,16 +90,7 @@ public class ApplicationUserService {
             ApplicationUser savedUser = applicationUserRepository.save(applicationUser);
             logger.info("Pomyślnie zarejestrowano użytkownika: {}", savedUser.getEmail());
 
-            // Tworzenie relacji użytkownika do wesela
-            if (wedding != null) {
-                ApplicationUserWedding userWedding = new ApplicationUserWedding();
-                userWedding.setUser(savedUser);
-                userWedding.setWedding(wedding);
-                userWedding.setJoinDate(LocalDateTime.now());
-
-                applicationUserWeddingRepository.save(userWedding);
-                logger.info("Użytkownik o id {} pomyślnie do wesela o id {}", savedUser.getId(), wedding.getId());
-            }
+            userWeddingService.createUserWeddingRelation(savedUser, wedding);
 
             return applicationUserMapper.toDto(savedUser);
 
@@ -108,8 +99,6 @@ public class ApplicationUserService {
             throw exception;
         }
     }
-
-
 
     public Map<String, String> verify(ApplicationUserDto applicationUserDto) {
         Authentication authentication = authenticationManager.authenticate(

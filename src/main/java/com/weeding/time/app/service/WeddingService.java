@@ -44,8 +44,4 @@ public class WeddingService {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
-    public Wedding saveWedding(Wedding wedding) {
-        return weddingRepository.save(wedding);
-    }
-
 }
