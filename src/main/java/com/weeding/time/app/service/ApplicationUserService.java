@@ -7,7 +7,6 @@ import com.weeding.time.app.model.ApplicationUser;
 import com.weeding.time.app.model.UserPrincipal;
 import com.weeding.time.app.model.Wedding;
 import com.weeding.time.app.repository.ApplicationUserRepository;
-import com.weeding.time.app.repository.ApplicationUserWeddingRepository;
 import com.weeding.time.app.repository.WeddingRepository;
 import com.weeding.time.app.types.ApplicationUserRole;
 import org.slf4j.Logger;

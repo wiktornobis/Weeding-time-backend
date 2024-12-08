@@ -34,14 +34,22 @@ public class WeddingService {
 
     public Wedding createWedding(WeddingDto weddingDto) {
         Wedding wedding = weddingMapper.toEntity(weddingDto);
-        // Ustawianie dodatkowych pól, które nie pochodzą z DTO
-        wedding.setAccessCode(generateAccessCode());
+        String uniqueCode = generateUniqueAccessCode();
+        wedding.setAccessCode(uniqueCode);
         wedding.setCreatedAt(LocalDateTime.now());
-        return wedding;
+
+        return weddingRepository.save(wedding);
+    }
+
+    private String generateUniqueAccessCode() {
+        String code;
+        do {
+            code = generateAccessCode();
+        } while (weddingRepository.existsByAccessCode(code));
+        return code;
     }
 
     private String generateAccessCode() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
-
 }
